@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FormWheel Tool</title>
+<style>
+:root{--bg:#f7f8fc;--card:#fff;--text:#172033;--muted:#667085;--line:#e4e7ec;--accent:#4f46e5;--accent2:#eef2ff;--danger:#dc2626}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:Arial,"Noto Sans KR",sans-serif}
+header{position:sticky;top:0;z-index:10;background:#fff;border-bottom:1px solid var(--line);padding:14px 20px;display:flex;align-items:center;justify-content:space-between}
+.logo{font-size:21px;font-weight:800;color:var(--text);text-decoration:none}.wheel{display:inline-flex;width:26px;height:26px;border:4px solid var(--accent);border-radius:50%;align-items:center;justify-content:center;margin:0 3px;font-size:12px}
+.container{max-width:1100px;margin:0 auto;padding:28px 18px 50px}
+h1{margin:0 0 7px;font-size:30px}.sub{color:var(--muted);margin:0 0 25px}
+.layout{display:grid;grid-template-columns:230px minmax(0,1fr);gap:18px}
+.sidebar,.panel{background:var(--card);border:1px solid var(--line);border-radius:18px}
+.sidebar{padding:10px;height:max-content}.tool-btn{width:100%;border:0;background:transparent;text-align:left;padding:12px;border-radius:11px;cursor:pointer;font-size:15px;color:var(--text)}
+.tool-btn:hover{background:#f3f4f6}.tool-btn.active{background:var(--accent2);color:var(--accent);font-weight:800}
+.content{min-width:0}.panel{padding:22px}.tool-title{font-size:23px;font-weight:800;margin:0 0 6px}.hint{color:var(--muted);font-size:14px;margin:0 0 20px}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:end}.field{flex:1;min-width:130px}.field label{display:block;font-size:13px;font-weight:700;margin-bottom:6px}
+input,textarea,select{width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--text);font-size:16px;outline:none}
+input:focus,textarea:focus,select:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent2)}
+textarea{resize:vertical}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+button.action{border:1px solid var(--line);background:#fff;border-radius:10px;padding:11px 15px;font-weight:700;cursor:pointer;min-height:44px}
+button.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+button.danger{color:var(--danger)}
+.result{margin-top:18px;padding:16px;background:#f8f9fb;border-radius:12px;min-height:55px;font-size:18px;font-weight:700;word-break:break-word}
+.calculator{max-width:390px}.calc-display{font-size:27px;text-align:right;margin-bottom:10px}.calc-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.calc-grid button{min-height:54px;font-size:17px}
+.big-time{font-size:48px;font-variant-numeric:tabular-nums;text-align:center;padding:25px 0}
+.seat-grid{display:grid;gap:10px;margin-top:18px}
+.seat{min-height:76px;border:1px solid var(--line);background:#f7f8fc;border-radius:14px;display:flex;align-items:center;justify-content:center;text-align:center;font-weight:800;font-size:16px;cursor:pointer;user-select:none}
+.seat.revealed{background:var(--accent2);border-color:var(--accent);color:var(--accent)}
+.seat.empty{color:#98a2b3;cursor:default}.seat:disabled{opacity:1}
+.status{color:var(--muted);font-size:14px;margin-top:12px}.hidden{display:none!important}
+.check-item{display:flex;gap:10px;align-items:center;padding:11px;border-bottom:1px solid var(--line)}.check-item:last-child{border-bottom:0}
+.check-item span{flex:1}.done{text-decoration:line-through;color:var(--muted)}
+.note{min-height:260px}
+@media(max-width:760px){.layout{grid-template-columns:1fr}.sidebar{display:grid;grid-template-columns:repeat(2,1fr);gap:3px}.container{padding-top:20px}h1{font-size:26px}}
+</style>
+</head>
+<body>
+<header>
+<a class="logo" href="https://semicolonxss.github.io/Formwheel/">Form<span class="wheel">🛞</span>Wheel</a>
+<strong>🛠️ Tool</strong>
+</header>
+
+<div class="container">
+<h1>FormWheel Tool</h1>
+<p class="sub">실생활에서 바로 사용할 수 있는 도구 모음</p>
+
+<div class="layout">
+<aside class="sidebar" id="toolNav">
+<button class="tool-btn active" data-tool="calculator">🧮 계산기</button>
+<button class="tool-btn" data-tool="timer">⏱️ 타이머</button>
+<button class="tool-btn" data-tool="stopwatch">⏰ 스톱워치</button>
+<button class="tool-btn" data-tool="random">🎲 랜덤 뽑기</button>
+<button class="tool-btn" data-tool="number">🔢 랜덤 숫자</button>
+<button class="tool-btn" data-tool="password">🔐 비밀번호</button>
+<button class="tool-btn" data-tool="memo">📝 메모장</button>
+<button class="tool-btn" data-tool="todo">✅ 체크리스트</button>
+<button class="tool-btn" data-tool="unit">📏 단위 변환</button>
+<button class="tool-btn" data-tool="date">📅 날짜 계산</button>
+<button class="tool-btn" data-tool="dday">📆 D-Day</button>
+<button class="tool-btn" data-tool="math">📐 수학 도구</button>
+<button class="tool-btn" data-tool="ratio">📊 비율 계산기</button>
+<button class="tool-btn" data-tool="color">🎨 색상 도구</button>
+<button class="tool-btn" data-tool="text">🔤 텍스트 도구</button>
+<button class="tool-btn" data-tool="world">🌍 세계 시간</button>
+<button class="tool-btn" data-tool="seats">🪑 자리바꾸기</button>
+</aside>
+
+<main class="content">
+<section class="panel tool" id="calculator">
+<h2 class="tool-title">🧮 계산기</h2><p class="hint">기본 사칙연산과 괄호를 지원합니다.</p>
+<div class="calculator"><input id="calcDisplay" class="calc-display" readonly value="0">
+<div class="calc-grid">
+<button class="action" data-calc="7">7</button><button class="action" data-calc="8">8</button><button class="action" data-calc="9">9</button><button class="action" data-calc="/">÷</button>
+<button class="action" data-calc="4">4</button><button class="action" data-calc="5">5</button><button class="action" data-calc="6">6</button><button class="action" data-calc="*">×</button>
+<button class="action" data-calc="1">1</button><button class="action" data-calc="2">2</button><button class="action" data-calc="3">3</button><button class="action" data-calc="-">−</button>
+<button class="action" data-calc="0">0</button><button class="action" data-calc=".">.</button><button class="action" data-calc="(">(</button><button class="action" data-calc="+">+</button>
+<button class="action" data-calc=")">)</button><button class="action" data-calc="C">C</button><button class="action primary" style="grid-column:span 2" data-calc="=">=</button>
+</div></div></section>
+
+<section class="panel tool hidden" id="timer">
+<h2 class="tool-title">⏱️ 타이머</h2><p class="hint">설정한 시간이 끝나면 화면에 알림을 표시합니다.</p>
+<div class="row"><div class="field"><label>분</label><input id="timerMin" type="number" min="0" value="1"></div><div class="field"><label>초</label><input id="timerSec" type="number" min="0" max="59" value="0"></div></div>
+<div class="big-time" id="timerDisplay">01:00</div><div class="actions"><button class="action primary" id="timerStart">시작</button><button class="action" id="timerPause">일시정지</button><button class="action" id="timerReset">초기화</button></div>
+</section>
+
+<section class="panel tool hidden" id="stopwatch">
+<h2 class="tool-title">⏰ 스톱워치</h2><p class="hint">시간을 측정하고 랩 기록을 남길 수 있습니다.</p>
+<div class="big-time" id="swDisplay">00:00.00</div><div class="actions"><button class="action primary" id="swStart">시작</button><button class="action" id="swLap">랩</button><button class="action" id="swReset">초기화</button></div>
+<div id="laps" class="result">랩 기록이 여기에 표시됩니다.</div>
+</section>
+
+<section class="panel tool hidden" id="random">
+<h2 class="tool-title">🎲 랜덤 뽑기</h2><p class="hint">이름이나 항목을 한 줄씩 입력하면 무작위로 하나를 선택합니다.</p>
+<textarea id="randomItems" rows="7" placeholder="민수&#10;지우&#10;서연&#10;현우"></textarea><div class="actions"><button class="action primary" id="pickBtn">🎲 뽑기</button></div><div class="result" id="pickResult">결과가 여기에 표시됩니다.</div>
+</section>
+
+<section class="panel tool hidden" id="number">
+<h2 class="tool-title">🔢 랜덤 숫자</h2><p class="hint">최소값과 최대값 사이에서 숫자를 하나 뽑습니다.</p>
+<div class="row"><div class="field"><label>최소</label><input id="numMin" type="number" value="1"></div><div class="field"><label>최대</label><input id="numMax" type="number" value="100"></div></div><div class="actions"><button class="action primary" id="numberBtn">랜덤 생성</button></div><div class="result" id="numberResult">-</div>
+</section>
+
+<section class="panel tool hidden" id="password">
+<h2 class="tool-title">🔐 비밀번호 생성기</h2><p class="hint">사이트에 실제 비밀번호로 사용할 때는 중요한 계정마다 서로 다른 비밀번호를 사용하세요.</p>
+<div class="row"><div class="field"><label>길이</label><input id="pwLen" type="number" min="4" max="128" value="16"></div><div class="field"><label>문자 종류</label><select id="pwMode"><option value="all">대/소문자 + 숫자 + 특수문자</option><option value="letters">대/소문자 + 숫자</option><option value="simple">소문자 + 숫자</option></select></div></div><div class="actions"><button class="action primary" id="pwBtn">생성</button></div><div class="result" id="pwResult">-</div>
+</section>
+
+<section class="panel tool hidden" id="memo">
+<h2 class="tool-title">📝 메모장</h2><p class="hint">이 브라우저에 자동 저장됩니다.</p>
+<textarea id="memoText" class="note" placeholder="메모를 입력하세요..."></textarea><div class="actions"><button class="action" id="memoClear">메모 지우기</button></div>
+</section>
+
+<section class="panel tool hidden" id="todo">
+<h2 class="tool-title">✅ 체크리스트</h2><p class="hint">할 일을 추가하고 완료한 항목을 체크하세요.</p>
+<div class="row"><div class="field"><input id="todoInput" placeholder="할 일을 입력하세요"></div><button class="action primary" id="todoAdd">추가</button></div><div id="todoList" style="margin-top:14px"></div>
+</section>
+
+<section class="panel tool hidden" id="unit">
+<h2 class="tool-title">📏 단위 변환</h2><p class="hint">길이, 무게, 온도를 간단하게 변환합니다.</p>
+<div class="row"><div class="field"><label>종류</label><select id="unitType"><option value="length">길이</option><option value="weight">무게</option><option value="temp">온도</option></select></div><div class="field"><label>값</label><input id="unitValue" type="number" value="1"></div><div class="field"><label>변환</label><select id="unitFrom"></select></div><div class="field"><select id="unitTo"></select></div></div><div class="actions"><button class="action primary" id="unitBtn">변환</button></div><div class="result" id="unitResult">-</div>
+</section>
+
+<section class="panel tool hidden" id="date">
+<h2 class="tool-title">📅 날짜 계산</h2><p class="hint">두 날짜 사이의 날짜 수를 계산합니다.</p>
+<div class="row"><div class="field"><label>시작 날짜</label><input id="dateA" type="date"></div><div class="field"><label>끝 날짜</label><input id="dateB" type="date"></div></div><div class="actions"><button class="action primary" id="dateBtn">계산</button></div><div class="result" id="dateResult">-</div>
+</section>
+
+<section class="panel tool hidden" id="dday">
+<h2 class="tool-title">📆 D-Day</h2><p class="hint">목표 날짜까지 남은 날짜를 확인합니다.</p>
+<div class="field"><label>목표 날짜</label><input id="ddayDate" type="date"></div><div class="actions"><button class="action primary" id="ddayBtn">계산</button></div><div class="result" id="ddayResult">-</div>
+</section>
+
+<section class="panel tool hidden" id="math">
+<h2 class="tool-title">📐 수학 도구</h2><p class="hint">원의 넓이/둘레, 평균, 피타고라스 계산을 빠르게 할 수 있습니다.</p>
+<select id="mathType"><option value="circle">원</option><option value="avg">평균</option><option value="pyth">피타고라스</option></select>
+<div id="mathInputs" class="row" style="margin-top:12px"></div><div class="actions"><button class="action primary" id="mathBtn">계산</button></div><div class="result" id="mathResult">-</div>
+</section>
+
+<section class="panel tool hidden" id="ratio">
+<h2 class="tool-title">📊 비율 계산기</h2><p class="hint">A:B = C:D에서 미지수를 계산하거나 퍼센트를 구합니다.</p>
+<div class="row"><div class="field"><label>A</label><input id="ra" type="number" value="2"></div><div class="field"><label>B</label><input id="rb" type="number" value="3"></div><div class="field"><label>C</label><input id="rc" type="number" value="10"></div></div><div class="actions"><button class="action primary" id="ratioBtn">D 계산</button></div><div class="result" id="ratioResult">-</div>
+</section>
+
+<section class="panel tool hidden" id="color">
+<h2 class="tool-title">🎨 색상 도구</h2><p class="hint">색을 선택하면 HEX와 RGB 값을 확인할 수 있습니다.</p>
+<div class="row"><div class="field"><input id="colorPicker" type="color" value="#4f46e5" style="height:50px;padding:4px"></div></div><div class="result" id="colorResult">HEX #4f46e5 · RGB 79, 70, 229</div>
+</section>
+
+<section class="panel tool hidden" id="text">
+<h2 class="tool-title">🔤 텍스트 도구</h2><p class="hint">글자 수, 공백 제외 글자 수, 줄 수를 계산합니다.</p>
+<textarea id="textInput" rows="9" placeholder="텍스트를 입력하세요"></textarea><div class="result" id="textResult">글자 수: 0 · 공백 제외: 0 · 줄 수: 0</div>
+</section>
+
+<section class="panel tool hidden" id="world">
+<h2 class="tool-title">🌍 세계 시간</h2><p class="hint">현재 브라우저 시간 기준으로 주요 도시의 시간을 표시합니다.</p>
+<div id="worldTimes" class="result" style="font-size:16px;font-weight:500;line-height:1.9"></div>
+</section>
+
+<section class="panel tool hidden" id="seats">
+<h2 class="tool-title">🪑 자리바꾸기</h2>
+<p class="hint">자리 위치를 그리드로 만들고 사람을 입력한 뒤 셔플하세요. 셔플 후 칸을 눌러야 배정된 사람이 공개됩니다.</p>
+<div class="row">
+<div class="field"><label>행</label><input id="seatRows" type="number" min="1" max="20" value="4"></div>
+<div class="field"><label>열</label><input id="seatCols" type="number" min="1" max="20" value="5"></div>
+</div>
+<div style="margin-top:12px"><label style="display:block;font-size:13px;font-weight:700;margin-bottom:6px">사람 이름</label>
+<textarea id="seatNames" rows="7" placeholder="한 줄에 한 명씩 입력&#10;민수&#10;지우&#10;서연&#10;현우&#10;유진"></textarea></div>
+<div class="actions"><button class="action primary" id="seatShuffle">🔀 자리 셔플</button><button class="action" id="seatReset">↩️ 초기화</button></div>
+<div class="status" id="seatStatus">행과 열, 사람을 입력한 뒤 셔플하세요.</div>
+<div id="seatGrid" class="seat-grid"></div>
+</section>
+</main>
+</div>
+</div>
+
+<script>
+(() => {
+const $=id=>document.getElementById(id);
+document.querySelectorAll('.tool-btn').forEach(btn=>btn.addEventListener('click',()=>{
+ document.querySelectorAll('.tool').forEach(x=>x.classList.add('hidden'));
+ document.querySelectorAll('.tool-btn').forEach(x=>x.classList.remove('active'));
+ $(btn.dataset.tool).classList.remove('hidden');btn.classList.add('active');
+ if(btn.dataset.tool==='world') updateWorld();
+}));
+/* calculator */
+let calc='';
+document.querySelectorAll('[data-calc]').forEach(b=>b.addEventListener('click',()=>{
+ const v=b.dataset.calc;
+ if(v==='C'){calc='';}
+ else if(v==='='){
+  try{if(!/^[0-9+*/(). -]+$/.test(calc))throw 0;const n=Function('"use strict";return ('+calc+')')();calc=Number.isFinite(n)?String(n):'';}catch{calc='';$('calcDisplay').value='오류';setTimeout(()=>$('calcDisplay').value=calc||'0',700);return;}
+ }else calc+=v;
+ $('calcDisplay').value=calc||'0';
+}));
+/* timer */
+let timerId=null,timerLeft=60;
+function timerRead(){const m=Math.max(0,parseInt($('timerMin').value)||0),s=Math.max(0,Math.min(59,parseInt($('timerSec').value)||0));return m*60+s}
+function timerRender(){let s=Math.max(0,timerLeft);$('timerDisplay').textContent=String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0')}
+$('timerStart').onclick=()=>{if(timerId)return;if(timerLeft<=0)timerLeft=timerRead();timerId=setInterval(()=>{timerLeft--;timerRender();if(timerLeft<=0){clearInterval(timerId);timerId=null;alert('⏱️ 타이머가 끝났습니다!')}},1000)}
+$('timerPause').onclick=()=>{clearInterval(timerId);timerId=null}
+$('timerReset').onclick=()=>{clearInterval(timerId);timerId=null;timerLeft=timerRead();timerRender()}
+$('timerMin').oninput=$('timerSec').oninput=()=>{if(!timerId){timerLeft=timerRead();timerRender()}}
+/* stopwatch */
+let swStart=0,swElapsed=0,swId=null;
+function swRender(){const t=swElapsed+(swId?Date.now()-swStart:0);const cs=Math.floor(t/10)%100,s=Math.floor(t/1000)%60,m=Math.floor(t/60000);$('swDisplay').textContent=String(m).padStart(2,'0')+':'+String(s).padStart(2,'0')+'.'+String(cs).padStart(2,'0')}
+$('swStart').onclick=()=>{if(swId){swElapsed+=Date.now()-swStart;clearInterval(swId);swId=null;$('swStart').textContent='계속'}else{swStart=Date.now();swId=setInterval(swRender,30);$('swStart').textContent='일시정지'}}
+$('swLap').onclick=()=>{if(!swId)return;const t=swElapsed+Date.now()-swStart;const d=document.createElement('div');d.textContent='랩 '+($('laps').children.length+1)+': '+(t/1000).toFixed(2)+'초';$('laps').appendChild(d)}
+$('swReset').onclick=()=>{clearInterval(swId);swId=null;swElapsed=0;$('swStart').textContent='시작';$('swDisplay').textContent='00:00.00';$('laps').textContent='랩 기록이 여기에 표시됩니다.'}
+/* random */
+$('pickBtn').onclick=()=>{const a=$('randomItems').value.split(/\n|,/).map(x=>x.trim()).filter(Boolean);$('pickResult').textContent=a.length?a[Math.floor(Math.random()*a.length)]:'항목을 입력해주세요.'}
+$('numberBtn').onclick=()=>{let a=Number($('numMin').value),b=Number($('numMax').value);if(a>b)[a,b]=[b,a];$('numberResult').textContent=Number.isFinite(a)&&Number.isFinite(b)?String(Math.floor(Math.random()*(b-a+1))+a):'숫자를 입력해주세요.'}
+/* password */
+$('pwBtn').onclick=()=>{let len=Math.max(4,Math.min(128,Number($('pwLen').value)||16));const sets={all:'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%^&*_-+=',letters:'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789',simple:'abcdefghijkmnopqrstuvwxyz23456789'};const chars=sets[$('pwMode').value];let out='';for(let i=0;i<len;i++)out+=chars[Math.floor(Math.random()*chars.length)];$('pwResult').textContent=out}
+/* memo */
+$('memoText').value=localStorage.getItem('fw_tool_memo')||'';$('memoText').addEventListener('input',()=>localStorage.setItem('fw_tool_memo',$('memoText').value));$('memoClear').onclick=()=>{$('memoText').value='';localStorage.removeItem('fw_tool_memo')}
+/* todo */
+let todos=JSON.parse(localStorage.getItem('fw_tool_todos')||'[]');
+function renderTodos(){const box=$('todoList');box.innerHTML='';todos.forEach((t,i)=>{const row=document.createElement('div');row.className='check-item';const c=document.createElement('input');c.type='checkbox';c.checked=t.done;c.onchange=()=>{t.done=c.checked;saveTodos()};const s=document.createElement('span');s.textContent=t.text;if(t.done)s.className='done';const d=document.createElement('button');d.className='action danger';d.textContent='삭제';d.onclick=()=>{todos.splice(i,1);saveTodos()};row.append(c,s,d);box.appendChild(row)})}
+function saveTodos(){localStorage.setItem('fw_tool_todos',JSON.stringify(todos));renderTodos()}
+$('todoAdd').onclick=()=>{const v=$('todoInput').value.trim();if(v){todos.push({text:v,done:false});$('todoInput').value='';saveTodos()}};renderTodos();
+/* units */
+const unitData={length:{m:1,cm:.01,mm:.001,km:1000,ft:.3048},weight:{kg:1,g:.001,mg:.000001,lb:.45359237},temp:null};
+const unitLabels={length:{m:'m',cm:'cm',mm:'mm',km:'km',ft:'ft'},weight:{kg:'kg',g:'g',mg:'mg',lb:'lb'},temp:{c:'°C',f:'°F',k:'K'}};
+function fillUnits(){const type=$('unitType').value;const opts=Object.keys(unitLabels[type]);$('unitFrom').innerHTML=opts.map(x=>`<option value="${x}">${unitLabels[type][x]}</option>`).join('');$('unitTo').innerHTML=opts.map(x=>`<option value="${x}">${unitLabels[type][x]}</option>`).join('');}
+$('unitType').onchange=fillUnits;fillUnits();
+$('unitBtn').onclick=()=>{const type=$('unitType').value,v=Number($('unitValue').value),a=$('unitFrom').value,b=$('unitTo').value;if(!Number.isFinite(v))return;$('unitResult').textContent=type==='temp'?String(a==='c'&&b==='f'?v*9/5+32:a==='f'&&b==='c'?(v-32)*5/9:a==='c'&&b==='k'?v+273.15:a==='k'&&b==='c'?v-273.15:a==='f'&&b==='k'?(v-32)*5/9+273.15:a==='k'&&b==='f'?(v-273.15)*9/5+32:v)+' '+unitLabels[type][b]:String(v*unitData[type][a]/unitData[type][b])+' '+unitLabels[type][b]}
+/* date */
+const today=new Date();$('dateA').valueAsDate=today;$('dateB').valueAsDate=today;
+$('dateBtn').onclick=()=>{const a=new Date($('dateA').value+'T00:00:00'),b=new Date($('dateB').value+'T00:00:00');if(isNaN(a)||isNaN(b))return;$('dateResult').textContent=Math.abs(Math.round((b-a)/86400000))+'일 차이입니다.'}
+$('ddayBtn').onclick=()=>{const v=$('ddayDate').value;if(!v)return;$('ddayResult').textContent=((new Date(v+'T00:00:00')-new Date(new Date().toDateString()))/86400000|0)===0?'D-Day!':((new Date(v+'T00:00:00')-new Date(new Date().toDateString()))/86400000>0?'D-'+Math.ceil((new Date(v+'T00:00:00')-new Date(new Date().toDateString()))/86400000):'D+'+Math.floor((new Date(new Date().toDateString())-new Date(v+'T00:00:00'))/86400000))}
+/* math */
+function renderMathInputs(){const t=$('mathType').value;const box=$('mathInputs');box.innerHTML=t==='circle'?'<div class="field"><label>반지름 r</label><input id="mx" type="number" value="5"></div>':t==='avg'?'<div class="field"><label>숫자 (쉼표로 구분)</label><input id="mx" value="10,20,30"></div>':'<div class="field"><label>a</label><input id="mx" type="number" value="3"></div><div class="field"><label>b</label><input id="my" type="number" value="4"></div>'}
+$('mathType').onchange=renderMathInputs;renderMathInputs();
+$('mathBtn').onclick=()=>{const t=$('mathType').value;if(t==='circle'){const r=Number($('mx').value);$('mathResult').textContent=`넓이 ${Math.PI*r*r.toFixed(2)} · 둘레 ${(2*Math.PI*r).toFixed(2)}`}else if(t==='avg'){const a=$('mx').value.split(',').map(Number).filter(Number.isFinite);$('mathResult').textContent=a.length?'평균 '+(a.reduce((x,y)=>x+y,0)/a.length).toFixed(4):'숫자를 입력해주세요.'}else{const a=Number($('mx').value),b=Number($('my').value);$('mathResult').textContent='c = '+Math.hypot(a,b).toFixed(4)}}
+/* ratio */
+$('ratioBtn').onclick=()=>{const a=Number($('ra').value),b=Number($('rb').value),c=Number($('rc').value);$('ratioResult').textContent=b&&a?'D = '+(b*c/a):'A와 B는 0이 될 수 없습니다.'}
+/* color */
+function updateColor(){const h=$('colorPicker').value;const n=parseInt(h.slice(1),16);$('colorResult').textContent=`HEX ${h.toUpperCase()} · RGB ${(n>>16)&255}, ${(n>>8)&255}, ${n&255}`}
+$('colorPicker').oninput=updateColor;updateColor();
+/* text */
+$('textInput').oninput=()=>{const v=$('textInput').value;$('textResult').textContent=`글자 수: ${v.length} · 공백 제외: ${v.replace(/\s/g,'').length} · 줄 수: ${v? v.split(/\n/).length:0}`}
+/* world */
+function updateWorld(){const cities=[['서울','Asia/Seoul'],['도쿄','Asia/Tokyo'],['런던','Europe/London'],['뉴욕','America/New_York'],['로스앤젤레스','America/Los_Angeles'],['시드니','Australia/Sydney']];$('worldTimes').innerHTML=cities.map(([n,t])=>`${n}: ${new Intl.DateTimeFormat('ko-KR',{timeZone:t,dateStyle:'medium',timeStyle:'medium'}).format(new Date())}`).join('<br>')}
+updateWorld();setInterval(updateWorld,1000);
+/* seats */
+let seatAssignments=[],seatRevealed=new Set(),seatReady=false;
+function seatVals(){const r=Math.max(1,Math.min(20,parseInt($('seatRows').value)||1)),c=Math.max(1,Math.min(20,parseInt($('seatCols').value)||1));$('seatRows').value=r;$('seatCols').value=c;return{r,c,n:$('seatNames').value.split(/\n|,/).map(x=>x.trim()).filter(Boolean)}}
+function renderSeats(){const {r,c,n}=seatVals(),total=r*c,g=$('seatGrid');g.style.gridTemplateColumns=`repeat(${c},minmax(0,1fr))`;g.innerHTML='';for(let i=0;i<total;i++){const b=document.createElement('button');b.type='button';b.className='seat';const person=seatAssignments[i];if(!seatReady||person===undefined){b.textContent=`${Math.floor(i/c)+1}-${i%c+1}`;b.disabled=true;b.classList.add('empty')}else if(seatRevealed.has(i)){b.textContent=person;b.classList.add('revealed')}else{b.textContent=`${Math.floor(i/c)+1}-${i%c+1}`;b.onclick=()=>{seatRevealed.add(i);renderSeats()}}g.appendChild(b)}$('seatStatus').textContent=seatReady?`공개된 자리 ${seatRevealed.size} / ${n.length}명 · 빈자리는 자동으로 비워졌습니다.`:'행과 열, 사람을 입력한 뒤 셔플하세요.'}
+function shuffleSeats(){const {r,c,n}=seatVals(),total=r*c;if(!n.length){$('seatStatus').textContent='사람을 한 명 이상 입력해주세요.';return}if(n.length>total){$('seatStatus').textContent=`사람이 ${n.length}명인데 자리는 ${total}칸입니다. 행/열을 늘려주세요.`;return}const p=[...n];for(let i=p.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[p[i],p[j]]=[p[j],p[i]]}seatAssignments=Array(total).fill(undefined);p.forEach((x,i)=>seatAssignments[i]=x);seatRevealed.clear();seatReady=true;$('seatStatus').textContent=`셔플 완료! ${n.length}명이 무작위로 배정되었습니다. 칸을 눌러 공개하세요.`;renderSeats()}
+$('seatShuffle').onclick=shuffleSeats;$('seatReset').onclick=()=>{seatAssignments=[];seatRevealed.clear();seatReady=false;renderSeats()};$('seatRows').oninput=$('seatCols').oninput=()=>{if(!seatReady)renderSeats()};renderSeats();
+})();
+</script>
+</body>
+</html>
