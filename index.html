@@ -28,7 +28,7 @@ button.danger{color:var(--danger)}
 .big-time{font-size:48px;font-variant-numeric:tabular-nums;text-align:center;padding:25px 0}
 .seat-grid{display:grid;gap:10px;margin-top:18px}
 .seat{min-height:76px;border:1px solid var(--line);background:#f7f8fc;border-radius:14px;display:flex;align-items:center;justify-content:center;text-align:center;font-weight:800;font-size:16px;cursor:pointer;user-select:none}
-.seat.revealed{background:var(--accent2);border-color:var(--accent);color:var(--accent)}
+.seat.revealed{background:var(--accent2);border-color:var(--accent);color:var(--accent)}.seat.marked-empty{background:#fff1f2;border-color:#fda4af;color:#be123c}
 .seat.empty{color:#98a2b3;cursor:default}.seat:disabled{opacity:1}
 .status{color:var(--muted);font-size:14px;margin-top:12px}.hidden{display:none!important}
 .check-item{display:flex;gap:10px;align-items:center;padding:11px;border-bottom:1px solid var(--line)}.check-item:last-child{border-bottom:0}
@@ -160,10 +160,11 @@ button.danger{color:var(--danger)}
 
 <section class="panel tool hidden" id="seats">
 <h2 class="tool-title">🪑 자리바꾸기</h2>
-<p class="hint">자리 위치를 그리드로 만들고 사람을 입력한 뒤 셔플하세요. 셔플 후 칸을 눌러야 배정된 사람이 공개됩니다.</p>
+<p class="hint">셔플 전에 <b>마우스 오른쪽 클릭</b>으로 원하는 칸을 빈자리로 지정하세요. 지정한 빈자리에는 사람이 배정되지 않습니다. 셔플 후 칸을 눌러 배정된 사람을 공개할 수 있습니다.</p>
 <div class="row">
 <div class="field"><label>행</label><input id="seatRows" type="number" min="1" max="20" value="4"></div>
 <div class="field"><label>열</label><input id="seatCols" type="number" min="1" max="20" value="5"></div>
+<div class="field"><label>빈자리 수</label><input id="seatEmpty" type="number" min="0" max="400" value="0"></div>
 </div>
 <div style="margin-top:12px"><label style="display:block;font-size:13px;font-weight:700;margin-bottom:6px">사람 이름</label>
 <textarea id="seatNames" rows="7" placeholder="한 줄에 한 명씩 입력&#10;민수&#10;지우&#10;서연&#10;현우&#10;유진"></textarea></div>
@@ -245,11 +246,55 @@ $('textInput').oninput=()=>{const v=$('textInput').value;$('textResult').textCon
 function updateWorld(){const cities=[['서울','Asia/Seoul'],['도쿄','Asia/Tokyo'],['런던','Europe/London'],['뉴욕','America/New_York'],['로스앤젤레스','America/Los_Angeles'],['시드니','Australia/Sydney']];$('worldTimes').innerHTML=cities.map(([n,t])=>`${n}: ${new Intl.DateTimeFormat('ko-KR',{timeZone:t,dateStyle:'medium',timeStyle:'medium'}).format(new Date())}`).join('<br>')}
 updateWorld();setInterval(updateWorld,1000);
 /* seats */
-let seatAssignments=[],seatRevealed=new Set(),seatReady=false;
-function seatVals(){const r=Math.max(1,Math.min(20,parseInt($('seatRows').value)||1)),c=Math.max(1,Math.min(20,parseInt($('seatCols').value)||1));$('seatRows').value=r;$('seatCols').value=c;return{r,c,n:$('seatNames').value.split(/\n|,/).map(x=>x.trim()).filter(Boolean)}}
-function renderSeats(){const {r,c,n}=seatVals(),total=r*c,g=$('seatGrid');g.style.gridTemplateColumns=`repeat(${c},minmax(0,1fr))`;g.innerHTML='';for(let i=0;i<total;i++){const b=document.createElement('button');b.type='button';b.className='seat';const person=seatAssignments[i];if(!seatReady||person===undefined){b.textContent=`${Math.floor(i/c)+1}-${i%c+1}`;b.disabled=true;b.classList.add('empty')}else if(seatRevealed.has(i)){b.textContent=person;b.classList.add('revealed')}else{b.textContent=`${Math.floor(i/c)+1}-${i%c+1}`;b.onclick=()=>{seatRevealed.add(i);renderSeats()}}g.appendChild(b)}$('seatStatus').textContent=seatReady?`공개된 자리 ${seatRevealed.size} / ${n.length}명 · 빈자리는 자동으로 비워졌습니다.`:'행과 열, 사람을 입력한 뒤 셔플하세요.'}
-function shuffleSeats(){const {r,c,n}=seatVals(),total=r*c;if(!n.length){$('seatStatus').textContent='사람을 한 명 이상 입력해주세요.';return}if(n.length>total){$('seatStatus').textContent=`사람이 ${n.length}명인데 자리는 ${total}칸입니다. 행/열을 늘려주세요.`;return}const p=[...n];for(let i=p.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[p[i],p[j]]=[p[j],p[i]]}seatAssignments=Array(total).fill(undefined);p.forEach((x,i)=>seatAssignments[i]=x);seatRevealed.clear();seatReady=true;$('seatStatus').textContent=`셔플 완료! ${n.length}명이 무작위로 배정되었습니다. 칸을 눌러 공개하세요.`;renderSeats()}
-$('seatShuffle').onclick=shuffleSeats;$('seatReset').onclick=()=>{seatAssignments=[];seatRevealed.clear();seatReady=false;renderSeats()};$('seatRows').oninput=$('seatCols').oninput=()=>{if(!seatReady)renderSeats()};renderSeats();
+let seatAssignments=[],seatRevealed=new Set(),seatReady=false,seatEmpty=new Set();
+function seatVals(){const r=Math.max(1,Math.min(20,parseInt($('seatRows').value)||1)),c=Math.max(1,Math.min(20,parseInt($('seatCols').value)||1));$('seatRows').value=r;$('seatCols').value=c;return{r,c,total:r*c,n:$('seatNames').value.split(/\n|,/).map(x=>x.trim()).filter(Boolean)}}
+function renderSeats(){
+ const {r,c,total,n}=seatVals(),g=$('seatGrid');
+ g.style.gridTemplateColumns=`repeat(${c},minmax(0,1fr))`;g.innerHTML='';
+ for(let i=0;i<total;i++){
+  const b=document.createElement('button');b.type='button';b.className='seat';
+  const label=`${Math.floor(i/c)+1}-${i%c+1}`,person=seatAssignments[i];
+  if(!seatReady){
+   b.textContent=seatEmpty.has(i)?'빈자리':label;
+   if(seatEmpty.has(i))b.classList.add('marked-empty');
+   b.title='우클릭으로 빈자리 지정/해제';
+   b.addEventListener('contextmenu',e=>{
+    e.preventDefault();
+    if(seatEmpty.has(i)) seatEmpty.delete(i); else seatEmpty.add(i);
+    renderSeats();
+   });
+  }else if(seatEmpty.has(i)){
+   b.textContent='빈자리';b.classList.add('empty');b.disabled=true;
+  }else if(person!==undefined){
+   if(seatRevealed.has(i)){b.textContent=person;b.classList.add('revealed')}
+   else{b.textContent=label;b.onclick=()=>{seatRevealed.add(i);renderSeats()}}
+  }else{
+   b.textContent='빈자리';b.classList.add('empty');b.disabled=true;
+  }
+  g.appendChild(b);
+ }
+ $('seatStatus').textContent=seatReady
+  ? `공개된 자리 ${seatRevealed.size} / ${n.length}명 · 지정된 빈자리 ${seatEmpty.size}칸`
+  : `현재 ${seatEmpty.size}칸을 빈자리로 지정했습니다. 우클릭으로 추가/해제하세요.`;
+}
+function shuffleSeats(){
+ const {total,n}=seatVals(),available=total-seatEmpty.size;
+ if(!n.length){$('seatStatus').textContent='사람을 한 명 이상 입력해주세요.';return}
+ if(n.length>available){$('seatStatus').textContent=`사람 ${n.length}명인데 빈자리를 제외하면 ${available}칸입니다. 빈자리 지정을 줄이거나 자리를 늘려주세요.`;return}
+ if(n.length<available){$('seatStatus').textContent=`사람 ${n.length}명인데 빈자리를 제외하면 ${available}칸입니다. 남는 ${available-n.length}칸도 빈자리로 지정해주세요.`;return}
+ const p=[...n];
+ for(let i=p.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[p[i],p[j]]=[p[j],p[i]]}
+ seatAssignments=Array(total).fill(undefined);
+ let k=0;
+ for(let i=0;i<total;i++)if(!seatEmpty.has(i))seatAssignments[i]=p[k++];
+ seatRevealed.clear();seatReady=true;
+ $('seatStatus').textContent=`셔플 완료! ${n.length}명이 지정된 빈자리를 제외하고 무작위 배정되었습니다. 칸을 눌러 공개하세요.`;
+ renderSeats();
+}
+$('seatShuffle').onclick=shuffleSeats;
+$('seatReset').onclick=()=>{seatAssignments=[];seatRevealed.clear();seatEmpty.clear();seatReady=false;renderSeats()};
+$('seatRows').oninput=$('seatCols').oninput=()=>{if(!seatReady){seatEmpty.clear();renderSeats()}};
+renderSeats();
 })();
 </script>
 </body>
