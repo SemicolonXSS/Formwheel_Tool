@@ -175,10 +175,9 @@ button.danger{color:var(--danger)}
 <div id="worldTimes" class="result" style="font-size:16px;font-weight:500;line-height:1.9"></div>
 </section>
 
-
 <section class="panel tool hidden" id="voice">
 <h2 class="tool-title">🎙️ 음성 변조</h2>
-<p class="hint">마이크 음성을 실시간으로 변조합니다. 브라우저의 마이크 권한이 필요합니다.</p>
+<p class="hint">마이크 음성을 실시간으로 변조합니다. 브라우저의 마이크 권한이 필요합니다. (스피커로 들으면 하울링이 생기니 이어폰을 사용하세요)</p>
 <div class="row">
   <div class="field"><label>효과</label>
     <select id="voiceEffect">
@@ -323,11 +322,10 @@ button.danger{color:var(--danger)}
 <div class="row">
 <div class="field"><label>행</label><input id="seatRows" type="number" min="1" max="20" value="4"></div>
 <div class="field"><label>열</label><input id="seatCols" type="number" min="1" max="20" value="5"></div>
-<div class="field"><label>빈자리 수</label><input id="seatEmpty" type="number" min="0" max="400" value="0"></div>
 </div>
 <div style="margin-top:12px"><label style="display:block;font-size:13px;font-weight:700;margin-bottom:6px">사람 이름</label>
 <textarea id="seatNames" rows="7" placeholder="한 줄에 한 명씩 입력&#10;민수&#10;지우&#10;서연&#10;현우&#10;유진"></textarea></div>
-<div class="actions"><button class="action primary" id="seatShuffle">🔀 자리 셔플</button><button class="action" id="seatReset">↩️ 초기화</button></div>
+<div class="actions"><button class="action primary" id="seatShuffle">🔀 자리 셔플</button><button class="action" id="seatReveal">👀 자리 공개</button><button class="action" id="seatReset">↩️ 초기화</button></div>
 <div class="status" id="seatStatus">행과 열, 사람을 입력한 뒤 셔플하세요.</div>
 <div id="seatGrid" class="seat-grid"></div>
 </section>
@@ -358,58 +356,78 @@ document.querySelectorAll('[data-calc]').forEach(b=>b.addEventListener('click',(
 let timerId=null,timerLeft=60;
 function timerRead(){const m=Math.max(0,parseInt($('timerMin').value)||0),s=Math.max(0,Math.min(59,parseInt($('timerSec').value)||0));return m*60+s}
 function timerRender(){let s=Math.max(0,timerLeft);$('timerDisplay').textContent=String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0')}
-$('timerStart').onclick=()=>{if(timerId)return;if(timerLeft<=0)timerLeft=timerRead();timerId=setInterval(()=>{timerLeft--;timerRender();if(timerLeft<=0){clearInterval(timerId);timerId=null;alert('⏱️ 타이머가 끝났습니다!')}},1000)}
-$('timerPause').onclick=()=>{clearInterval(timerId);timerId=null}
-$('timerReset').onclick=()=>{clearInterval(timerId);timerId=null;timerLeft=timerRead();timerRender()}
-$('timerMin').oninput=$('timerSec').oninput=()=>{if(!timerId){timerLeft=timerRead();timerRender()}}
+$('timerStart').onclick=()=>{if(timerId)return;if(timerLeft<=0)timerLeft=timerRead();timerId=setInterval(()=>{timerLeft--;timerRender();if(timerLeft<=0){clearInterval(timerId);timerId=null;alert('⏱️ 타이머가 끝났습니다!')}},1000)};
+$('timerPause').onclick=()=>{clearInterval(timerId);timerId=null};
+$('timerReset').onclick=()=>{clearInterval(timerId);timerId=null;timerLeft=timerRead();timerRender()};
+$('timerMin').oninput=$('timerSec').oninput=()=>{if(!timerId){timerLeft=timerRead();timerRender()}};
 /* stopwatch */
 let swStart=0,swElapsed=0,swId=null;
 function swRender(){const t=swElapsed+(swId?Date.now()-swStart:0);const cs=Math.floor(t/10)%100,s=Math.floor(t/1000)%60,m=Math.floor(t/60000);$('swDisplay').textContent=String(m).padStart(2,'0')+':'+String(s).padStart(2,'0')+'.'+String(cs).padStart(2,'0')}
-$('swStart').onclick=()=>{if(swId){swElapsed+=Date.now()-swStart;clearInterval(swId);swId=null;$('swStart').textContent='계속'}else{swStart=Date.now();swId=setInterval(swRender,30);$('swStart').textContent='일시정지'}}
-$('swLap').onclick=()=>{if(!swId)return;const t=swElapsed+Date.now()-swStart;const d=document.createElement('div');d.textContent='랩 '+($('laps').children.length+1)+': '+(t/1000).toFixed(2)+'초';$('laps').appendChild(d)}
-$('swReset').onclick=()=>{clearInterval(swId);swId=null;swElapsed=0;$('swStart').textContent='시작';$('swDisplay').textContent='00:00.00';$('laps').textContent='랩 기록이 여기에 표시됩니다.'}
+$('swStart').onclick=()=>{if(swId){swElapsed+=Date.now()-swStart;clearInterval(swId);swId=null;swRender();$('swStart').textContent='계속'}else{swStart=Date.now();swId=setInterval(swRender,30);$('swStart').textContent='일시정지'}};
+$('swLap').onclick=()=>{if(!swId)return;const t=swElapsed+Date.now()-swStart;if(!$('laps').dataset.has){$('laps').textContent='';$('laps').dataset.has='1'}const d=document.createElement('div');d.textContent='랩 '+($('laps').children.length+1)+': '+(t/1000).toFixed(2)+'초';$('laps').appendChild(d)};
+$('swReset').onclick=()=>{clearInterval(swId);swId=null;swElapsed=0;$('swStart').textContent='시작';$('swDisplay').textContent='00:00.00';$('laps').textContent='랩 기록이 여기에 표시됩니다.';delete $('laps').dataset.has};
 /* random */
-$('pickBtn').onclick=()=>{const a=$('randomItems').value.split(/\n|,/).map(x=>x.trim()).filter(Boolean);$('pickResult').textContent=a.length?a[Math.floor(Math.random()*a.length)]:'항목을 입력해주세요.'}
-$('numberBtn').onclick=()=>{let a=Number($('numMin').value),b=Number($('numMax').value);if(a>b)[a,b]=[b,a];$('numberResult').textContent=Number.isFinite(a)&&Number.isFinite(b)?String(Math.floor(Math.random()*(b-a+1))+a):'숫자를 입력해주세요.'}
+$('pickBtn').onclick=()=>{const a=$('randomItems').value.split(/\n|,/).map(x=>x.trim()).filter(Boolean);$('pickResult').textContent=a.length?a[Math.floor(Math.random()*a.length)]:'항목을 입력해주세요.'};
+$('numberBtn').onclick=()=>{let a=Math.ceil(Number($('numMin').value)),b=Math.floor(Number($('numMax').value));if(a>b)[a,b]=[b,a];$('numberResult').textContent=Number.isFinite(a)&&Number.isFinite(b)?String(Math.floor(Math.random()*(b-a+1))+a):'숫자를 입력해주세요.'};
 /* password */
-$('pwBtn').onclick=()=>{let len=Math.max(4,Math.min(128,Number($('pwLen').value)||16));const sets={all:'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%^&*_-+=',letters:'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789',simple:'abcdefghijkmnopqrstuvwxyz23456789'};const chars=sets[$('pwMode').value];let out='';for(let i=0;i<len;i++)out+=chars[Math.floor(Math.random()*chars.length)];$('pwResult').textContent=out}
-/* memo */
-$('memoText').value=localStorage.getItem('fw_tool_memo')||'';$('memoText').addEventListener('input',()=>localStorage.setItem('fw_tool_memo',$('memoText').value));$('memoClear').onclick=()=>{$('memoText').value='';localStorage.removeItem('fw_tool_memo')}
+$('pwBtn').onclick=()=>{let len=Math.max(4,Math.min(128,Number($('pwLen').value)||16));const sets={all:'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%^&*_-+=',letters:'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789',simple:'abcdefghijkmnopqrstuvwxyz23456789'};const chars=sets[$('pwMode').value];const arr=new Uint32Array(len);crypto.getRandomValues(arr);let out='';for(let i=0;i<len;i++)out+=chars[arr[i]%chars.length];$('pwResult').textContent=out};
+/* memo (localStorage may be unavailable) */
+const store={get(k){try{return localStorage.getItem(k)}catch{return null}},set(k,v){try{localStorage.setItem(k,v)}catch{}},del(k){try{localStorage.removeItem(k)}catch{}}};
+$('memoText').value=store.get('fw_tool_memo')||'';
+$('memoText').addEventListener('input',()=>store.set('fw_tool_memo',$('memoText').value));
+$('memoClear').onclick=()=>{$('memoText').value='';store.del('fw_tool_memo')};
 /* todo */
-let todos=JSON.parse(localStorage.getItem('fw_tool_todos')||'[]');
-function renderTodos(){const box=$('todoList');box.innerHTML='';todos.forEach((t,i)=>{const row=document.createElement('div');row.className='check-item';const c=document.createElement('input');c.type='checkbox';c.checked=t.done;c.onchange=()=>{t.done=c.checked;saveTodos()};const s=document.createElement('span');s.textContent=t.text;if(t.done)s.className='done';const d=document.createElement('button');d.className='action danger';d.textContent='삭제';d.onclick=()=>{todos.splice(i,1);saveTodos()};row.append(c,s,d);box.appendChild(row)})}
-function saveTodos(){localStorage.setItem('fw_tool_todos',JSON.stringify(todos));renderTodos()}
-$('todoAdd').onclick=()=>{const v=$('todoInput').value.trim();if(v){todos.push({text:v,done:false});$('todoInput').value='';saveTodos()}};renderTodos();
+let todos=[];try{todos=JSON.parse(store.get('fw_tool_todos')||'[]')}catch{todos=[]}
+function renderTodos(){const box=$('todoList');box.innerHTML='';todos.forEach((t,i)=>{const row=document.createElement('div');row.className='check-item';const c=document.createElement('input');c.type='checkbox';c.style.width='auto';c.checked=t.done;c.onchange=()=>{t.done=c.checked;saveTodos()};const s=document.createElement('span');s.textContent=t.text;if(t.done)s.className='done';const d=document.createElement('button');d.className='action danger';d.textContent='삭제';d.onclick=()=>{todos.splice(i,1);saveTodos()};row.append(c,s,d);box.appendChild(row)})}
+function saveTodos(){store.set('fw_tool_todos',JSON.stringify(todos));renderTodos()}
+$('todoAdd').onclick=()=>{const v=$('todoInput').value.trim();if(v){todos.push({text:v,done:false});$('todoInput').value='';saveTodos()}};
+$('todoInput').addEventListener('keydown',e=>{if(e.key==='Enter')$('todoAdd').click()});
+renderTodos();
 /* units */
 const unitData={length:{m:1,cm:.01,mm:.001,km:1000,ft:.3048},weight:{kg:1,g:.001,mg:.000001,lb:.45359237},temp:null};
 const unitLabels={length:{m:'m',cm:'cm',mm:'mm',km:'km',ft:'ft'},weight:{kg:'kg',g:'g',mg:'mg',lb:'lb'},temp:{c:'°C',f:'°F',k:'K'}};
-function fillUnits(){const type=$('unitType').value;const opts=Object.keys(unitLabels[type]);$('unitFrom').innerHTML=opts.map(x=>`<option value="${x}">${unitLabels[type][x]}</option>`).join('');$('unitTo').innerHTML=opts.map(x=>`<option value="${x}">${unitLabels[type][x]}</option>`).join('');}
+function fillUnits(){const type=$('unitType').value;const opts=Object.keys(unitLabels[type]);const html=opts.map(x=>`<option value="${x}">${unitLabels[type][x]}</option>`).join('');$('unitFrom').innerHTML=html;$('unitTo').innerHTML=html;if(opts.length>1)$('unitTo').selectedIndex=1}
 $('unitType').onchange=fillUnits;fillUnits();
-$('unitBtn').onclick=()=>{const type=$('unitType').value,v=Number($('unitValue').value),a=$('unitFrom').value,b=$('unitTo').value;if(!Number.isFinite(v))return;$('unitResult').textContent=type==='temp'?String(a==='c'&&b==='f'?v*9/5+32:a==='f'&&b==='c'?(v-32)*5/9:a==='c'&&b==='k'?v+273.15:a==='k'&&b==='c'?v-273.15:a==='f'&&b==='k'?(v-32)*5/9+273.15:a==='k'&&b==='f'?(v-273.15)*9/5+32:v)+' '+unitLabels[type][b]:String(v*unitData[type][a]/unitData[type][b])+' '+unitLabels[type][b]}
+$('unitBtn').onclick=()=>{
+ const type=$('unitType').value,v=Number($('unitValue').value),a=$('unitFrom').value,b=$('unitTo').value;
+ if(!Number.isFinite(v))return;
+ let out;
+ if(type==='temp'){
+  let c=a==='c'?v:a==='f'?(v-32)*5/9:v-273.15;
+  out=b==='c'?c:b==='f'?c*9/5+32:c+273.15;
+ }else out=v*unitData[type][a]/unitData[type][b];
+ $('unitResult').textContent=String(Math.round(out*1e8)/1e8)+' '+unitLabels[type][b];
+};
 /* date */
 const today=new Date();$('dateA').valueAsDate=today;$('dateB').valueAsDate=today;
-$('dateBtn').onclick=()=>{const a=new Date($('dateA').value+'T00:00:00'),b=new Date($('dateB').value+'T00:00:00');if(isNaN(a)||isNaN(b))return;$('dateResult').textContent=Math.abs(Math.round((b-a)/86400000))+'일 차이입니다.'}
-$('ddayBtn').onclick=()=>{const v=$('ddayDate').value;if(!v)return;$('ddayResult').textContent=((new Date(v+'T00:00:00')-new Date(new Date().toDateString()))/86400000|0)===0?'D-Day!':((new Date(v+'T00:00:00')-new Date(new Date().toDateString()))/86400000>0?'D-'+Math.ceil((new Date(v+'T00:00:00')-new Date(new Date().toDateString()))/86400000):'D+'+Math.floor((new Date(new Date().toDateString())-new Date(v+'T00:00:00'))/86400000))}
+$('dateBtn').onclick=()=>{const a=new Date($('dateA').value+'T00:00:00'),b=new Date($('dateB').value+'T00:00:00');if(isNaN(a)||isNaN(b))return;$('dateResult').textContent=Math.abs(Math.round((b-a)/86400000))+'일 차이입니다.'};
+$('ddayBtn').onclick=()=>{
+ const v=$('ddayDate').value;if(!v)return;
+ const t=new Date(v+'T00:00:00'),n=new Date(new Date().toDateString());
+ const diff=Math.round((t-n)/86400000);
+ $('ddayResult').textContent=diff===0?'D-Day!':diff>0?'D-'+diff:'D+'+Math.abs(diff);
+};
 /* math */
 function renderMathInputs(){const t=$('mathType').value;const box=$('mathInputs');box.innerHTML=t==='circle'?'<div class="field"><label>반지름 r</label><input id="mx" type="number" value="5"></div>':t==='avg'?'<div class="field"><label>숫자 (쉼표로 구분)</label><input id="mx" value="10,20,30"></div>':'<div class="field"><label>a</label><input id="mx" type="number" value="3"></div><div class="field"><label>b</label><input id="my" type="number" value="4"></div>'}
 $('mathType').onchange=renderMathInputs;renderMathInputs();
-$('mathBtn').onclick=()=>{const t=$('mathType').value;if(t==='circle'){const r=Number($('mx').value);$('mathResult').textContent=`넓이 ${Math.PI*r*r.toFixed(2)} · 둘레 ${(2*Math.PI*r).toFixed(2)}`}else if(t==='avg'){const a=$('mx').value.split(',').map(Number).filter(Number.isFinite);$('mathResult').textContent=a.length?'평균 '+(a.reduce((x,y)=>x+y,0)/a.length).toFixed(4):'숫자를 입력해주세요.'}else{const a=Number($('mx').value),b=Number($('my').value);$('mathResult').textContent='c = '+Math.hypot(a,b).toFixed(4)}}
+$('mathBtn').onclick=()=>{const t=$('mathType').value;if(t==='circle'){const r=Number($('mx').value);$('mathResult').textContent=`넓이 ${(Math.PI*r*r).toFixed(2)} · 둘레 ${(2*Math.PI*r).toFixed(2)}`}else if(t==='avg'){const a=$('mx').value.split(',').map(x=>x.trim()).filter(x=>x!=='').map(Number).filter(Number.isFinite);$('mathResult').textContent=a.length?'평균 '+(a.reduce((x,y)=>x+y,0)/a.length).toFixed(4):'숫자를 입력해주세요.'}else{const a=Number($('mx').value),b=Number($('my').value);$('mathResult').textContent='c = '+Math.hypot(a,b).toFixed(4)}};
 /* ratio */
-$('ratioBtn').onclick=()=>{const a=Number($('ra').value),b=Number($('rb').value),c=Number($('rc').value);$('ratioResult').textContent=b&&a?'D = '+(b*c/a):'A와 B는 0이 될 수 없습니다.'}
+$('ratioBtn').onclick=()=>{const a=Number($('ra').value),b=Number($('rb').value),c=Number($('rc').value);$('ratioResult').textContent=a?'D = '+(b*c/a):'A는 0이 될 수 없습니다.'};
 /* color */
 function updateColor(){const h=$('colorPicker').value;const n=parseInt(h.slice(1),16);$('colorResult').textContent=`HEX ${h.toUpperCase()} · RGB ${(n>>16)&255}, ${(n>>8)&255}, ${n&255}`}
 $('colorPicker').oninput=updateColor;updateColor();
 /* text */
-$('textInput').oninput=()=>{const v=$('textInput').value;$('textResult').textContent=`글자 수: ${v.length} · 공백 제외: ${v.replace(/\s/g,'').length} · 줄 수: ${v? v.split(/\n/).length:0}`}
+$('textInput').oninput=()=>{const v=$('textInput').value;$('textResult').textContent=`글자 수: ${v.length} · 공백 제외: ${v.replace(/\s/g,'').length} · 줄 수: ${v? v.split(/\n/).length:0}`};
 /* world */
 function updateWorld(){const cities=[['서울','Asia/Seoul'],['도쿄','Asia/Tokyo'],['런던','Europe/London'],['뉴욕','America/New_York'],['로스앤젤레스','America/Los_Angeles'],['시드니','Australia/Sydney']];$('worldTimes').innerHTML=cities.map(([n,t])=>`${n}: ${new Intl.DateTimeFormat('ko-KR',{timeZone:t,dateStyle:'medium',timeStyle:'medium'}).format(new Date())}`).join('<br>')}
 updateWorld();setInterval(updateWorld,1000);
 /* voice changer */
 let voiceCtx=null,voiceStream=null,voiceSource=null,voiceNodes=[],voiceAnalyser=null,voiceMeterId=null;
 const voiceAmount=$('voiceAmount'),voiceAmountValue=$('voiceAmountValue');
-voiceAmount.oninput=()=>voiceAmountValue.textContent=voiceAmount.value+'%';
+voiceAmount.oninput=()=>{voiceAmountValue.textContent=voiceAmount.value+'%';connectVoiceEffect()};
 
 function disconnectVoice(){
+  if(voiceSource){try{voiceSource.disconnect()}catch{}if(voiceAnalyser){try{voiceSource.connect(voiceAnalyser)}catch{}}}
   voiceNodes.forEach(n=>{try{n.disconnect()}catch{}});
   voiceNodes=[];
 }
@@ -454,6 +472,8 @@ function connectVoiceEffect(){
 }
 async function startVoice(){
   try{
+    if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){$('voiceStatus').textContent='이 브라우저(또는 http 환경)에서는 마이크를 사용할 수 없습니다. https로 접속해주세요.';return}
+    if(voiceStream)stopVoice();
     if(!voiceCtx)voiceCtx=new (window.AudioContext||window.webkitAudioContext)();
     if(voiceCtx.state==='suspended')await voiceCtx.resume();
     voiceStream=await navigator.mediaDevices.getUserMedia({audio:true});
@@ -475,13 +495,19 @@ async function startVoice(){
 }
 function stopVoice(){
   if(voiceStream)voiceStream.getTracks().forEach(t=>t.stop());
-  disconnectVoice();voiceSource=null;voiceAnalyser=null;
+  voiceStream=null;
+  if(voiceSource){try{voiceSource.disconnect()}catch{}}
+  voiceNodes.forEach(n=>{try{n.disconnect()}catch{}});voiceNodes=[];
+  voiceSource=null;voiceAnalyser=null;
   if(voiceMeterId)cancelAnimationFrame(voiceMeterId);
   $('voiceMeter').style.width='0%';$('voiceStatus').textContent='마이크가 중지되었습니다.';
 }
 $('voiceStart').onclick=startVoice;
 $('voiceStop').onclick=stopVoice;
-$('voiceEffect').onchange=connectVoiceEffect;
+$('voiceEffect').onchange=()=>{
+  document.querySelectorAll('[data-voice-effect]').forEach(x=>x.classList.toggle('active',x.dataset.voiceEffect===$('voiceEffect').value));
+  connectVoiceEffect();
+};
 document.querySelectorAll('[data-voice-effect]').forEach(b=>b.onclick=()=>{
   $('voiceEffect').value=b.dataset.voiceEffect;
   document.querySelectorAll('[data-voice-effect]').forEach(x=>x.classList.remove('active'));
@@ -496,12 +522,14 @@ $('videoFile').onchange=e=>{
   if(videoUrl)URL.revokeObjectURL(videoUrl);
   videoUrl=URL.createObjectURL(file);
   $('videoPreview').src=videoUrl;$('videoPreview').load();
+  $('videoPreview').playbackRate=Number($('videoSpeed').value);
   $('videoStatus').textContent=`${file.name} · ${(file.size/1024/1024).toFixed(1)}MB`;
 };
 function setVideoSpeed(v){
   $('videoSpeed').value=v;$('videoSpeedValue').textContent=Number(v).toFixed(2)+'×';$('videoPreview').playbackRate=Number(v);
 }
 $('videoSpeed').oninput=e=>setVideoSpeed(e.target.value);
+$('videoPreview').addEventListener('loadedmetadata',()=>{$('videoPreview').playbackRate=Number($('videoSpeed').value)});
 document.querySelectorAll('[data-video-speed]').forEach(b=>b.onclick=()=>setVideoSpeed(b.dataset.videoSpeed));
 
 /* audio tools */
@@ -510,16 +538,18 @@ $('audioFile').onchange=e=>{
   const file=e.target.files[0];if(!file)return;
   if(audioUrl)URL.revokeObjectURL(audioUrl);
   audioUrl=URL.createObjectURL(file);$('audioPreview').src=audioUrl;$('audioPreview').load();
+  $('audioPreview').playbackRate=Number($('audioSpeed').value);
+  $('audioPreview').volume=Number($('audioVolume').value)/100;
   $('audioStatus').textContent=`${file.name} · ${(file.size/1024/1024).toFixed(1)}MB`;
 };
 $('audioSpeed').oninput=e=>{$('audioSpeedValue').textContent=Number(e.target.value).toFixed(2)+'×';$('audioPreview').playbackRate=Number(e.target.value)};
+$('audioPreview').addEventListener('loadedmetadata',()=>{$('audioPreview').playbackRate=Number($('audioSpeed').value)});
 $('audioVolume').oninput=e=>{$('audioVolumeValue').textContent=e.target.value+'%';$('audioPreview').volume=Number(e.target.value)/100};
 
 /* QR */
 $('qrBtn').onclick=()=>{
   const v=$('qrText').value.trim(),box=$('qrOutput');
   if(!v){box.textContent='텍스트나 링크를 입력해주세요.';return}
-  // Uses a public QR image endpoint only for the rendered QR image.
   box.innerHTML=`<img alt="QR 코드" style="width:220px;height:220px;image-rendering:pixelated" src="https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(v)}">`;
 };
 $('qrClear').onclick=()=>{$('qrText').value='';$('qrOutput').textContent='QR 코드가 여기에 표시됩니다.'};
@@ -527,10 +557,10 @@ $('qrClear').onclick=()=>{$('qrText').value='';$('qrOutput').textContent='QR 코
 /* JSON */
 function parseJSON(){
   try{return JSON.parse($('jsonInput').value)}
-  catch(e){$('jsonResult').textContent='❌ JSON 형식이 올바르지 않습니다.';return null}
+  catch(e){$('jsonResult').textContent='❌ JSON 형식이 올바르지 않습니다.';return undefined}
 }
-$('jsonPretty').onclick=()=>{const o=parseJSON();if(o!==null)$('jsonResult').textContent=JSON.stringify(o,null,2)};
-$('jsonMinify').onclick=()=>{const o=parseJSON();if(o!==null)$('jsonResult').textContent=JSON.stringify(o)};
+$('jsonPretty').onclick=()=>{const o=parseJSON();if(o!==undefined)$('jsonResult').textContent=JSON.stringify(o,null,2)};
+$('jsonMinify').onclick=()=>{const o=parseJSON();if(o!==undefined)$('jsonResult').textContent=JSON.stringify(o)};
 $('jsonCopy').onclick=async()=>{
   const v=$('jsonResult').textContent;
   if(!v||v.startsWith('JSON 결과')||v.startsWith('❌'))return;
@@ -544,24 +574,27 @@ function loadTTSVoices(){
   if(!('speechSynthesis' in window)){$('ttsStatus').textContent='이 브라우저에서는 음성 합성을 지원하지 않습니다.';return}
   ttsVoices=speechSynthesis.getVoices();
   $('ttsVoice').innerHTML=ttsVoices.map((v,i)=>`<option value="${i}">${v.name} (${v.lang})</option>`).join('');
+  const ko=ttsVoices.findIndex(v=>v.lang&&v.lang.toLowerCase().startsWith('ko'));
+  if(ko>=0)$('ttsVoice').value=String(ko);
 }
 if('speechSynthesis' in window){loadTTSVoices();speechSynthesis.onvoiceschanged=loadTTSVoices}
 $('ttsRate').oninput=e=>$('ttsRateValue').textContent=Number(e.target.value).toFixed(2)+'×';
 $('ttsPitch').oninput=e=>$('ttsPitchValue').textContent=Number(e.target.value).toFixed(2);
 $('ttsSpeak').onclick=()=>{
+  if(!('speechSynthesis' in window))return;
   const text=$('ttsText').value.trim();if(!text)return;
   speechSynthesis.cancel();
   const u=new SpeechSynthesisUtterance(text);
   const v=ttsVoices[Number($('ttsVoice').value)];
-  if(v)u.voice=v;
+  if(v){u.voice=v;u.lang=v.lang}
   u.rate=Number($('ttsRate').value);u.pitch=Number($('ttsPitch').value);
   u.onstart=()=>$('ttsStatus').textContent='읽는 중입니다.';
   u.onend=()=>$('ttsStatus').textContent='읽기가 끝났습니다.';
   speechSynthesis.speak(u);
 };
-$('ttsPause').onclick=()=>speechSynthesis.pause();
-$('ttsResume').onclick=()=>speechSynthesis.resume();
-$('ttsStop').onclick=()=>{speechSynthesis.cancel();$('ttsStatus').textContent='중지했습니다.'};
+$('ttsPause').onclick=()=>{if('speechSynthesis' in window)speechSynthesis.pause()};
+$('ttsResume').onclick=()=>{if('speechSynthesis' in window)speechSynthesis.resume()};
+$('ttsStop').onclick=()=>{if('speechSynthesis' in window){speechSynthesis.cancel();$('ttsStatus').textContent='중지했습니다.'}};
 
 /* image tool */
 let imageObjUrl=null,imageNaturalW=0,imageNaturalH=0,keepRatio=true;
@@ -569,12 +602,13 @@ $('imageFile').onchange=e=>{
   const file=e.target.files[0];if(!file)return;
   if(imageObjUrl)URL.revokeObjectURL(imageObjUrl);
   imageObjUrl=URL.createObjectURL(file);
-  const img=$('imagePreview');img.src=imageObjUrl;img.style.display='block';
+  const img=$('imagePreview');
   img.onload=()=>{
     imageNaturalW=img.naturalWidth;imageNaturalH=img.naturalHeight;
     $('imageWidth').value=imageNaturalW;$('imageHeight').value=imageNaturalH;
     $('imageInfo').textContent=`원본 ${imageNaturalW} × ${imageNaturalH}px · ${file.name}`;
   };
+  img.src=imageObjUrl;img.style.display='block';
 };
 $('imageKeepRatio').onclick=()=>{keepRatio=!keepRatio;$('imageKeepRatio').textContent=keepRatio?'🔗 비율 유지':'🔓 비율 자유'};
 $('imageWidth').oninput=()=>{
@@ -625,23 +659,32 @@ function renderSeats(){
   ? `공개된 자리 ${seatRevealed.size} / ${n.length}명 · 지정된 빈자리 ${seatEmpty.size}칸`
   : `현재 ${seatEmpty.size}칸을 빈자리로 지정했습니다. 우클릭으로 추가/해제하세요.`;
 }
-function shuffleSeats(){
- const {total,n}=seatVals(),available=total-seatEmpty.size;
- if(!n.length){$('seatStatus').textContent='사람을 한 명 이상 입력해주세요.';return}
- if(n.length>available){$('seatStatus').textContent=`사람 ${n.length}명인데 빈자리를 제외하면 ${available}칸입니다. 빈자리 지정을 줄이거나 자리를 늘려주세요.`;return}
- if(n.length<available){$('seatStatus').textContent=`사람 ${n.length}명인데 빈자리를 제외하면 ${available}칸입니다. 남는 ${available-n.length}칸도 빈자리로 지정해주세요.`;return}
- const p=[...n];
- for(let i=p.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[p[i],p[j]]=[p[j],p[i]]}
- seatAssignments=Array(total).fill(undefined);
- let k=0;
- for(let i=0;i<total;i++)if(!seatEmpty.has(i))seatAssignments[i]=p[k++];
- seatRevealed.clear();seatReady=true;
- $('seatStatus').textContent=`셔플 완료! ${n.length}명이 지정된 빈자리를 제외하고 무작위 배정되었습니다. 칸을 눌러 공개하세요.`;
- renderSeats();
+function prepareSeats(shuffle){
+  const {total,n}=seatVals(),available=total-seatEmpty.size;
+  if(!n.length){$('seatStatus').textContent='사람을 한 명 이상 입력해주세요.';return}
+  if(n.length>available){$('seatStatus').textContent=`사람 ${n.length}명인데 빈자리를 제외하면 ${available}칸입니다. 빈자리 지정을 줄이거나 자리를 늘려주세요.`;return}
+  if(n.length<available){$('seatStatus').textContent=`사람 ${n.length}명인데 빈자리를 제외하면 ${available}칸입니다. 남는 ${available-n.length}칸도 빈자리로 지정해주세요.`;return}
+  const p=[...n];
+  if(shuffle){
+    for(let i=p.length-1;i>0;i--){
+      const j=Math.floor(Math.random()*(i+1));
+      [p[i],p[j]]=[p[j],p[i]];
+    }
+  }
+  seatAssignments=Array(total).fill(undefined);
+  let k=0;
+  for(let i=0;i<total;i++)if(!seatEmpty.has(i))seatAssignments[i]=p[k++];
+  seatRevealed.clear();
+  seatReady=true;
+  renderSeats();
+  $('seatStatus').textContent=shuffle
+    ? `셔플 완료! ${n.length}명이 지정된 빈자리를 제외하고 무작위 배정되었습니다. 칸을 눌러 공개하세요.`
+    : `자리 공개 준비 완료! 입력한 순서대로 ${n.length}명이 배정되었습니다. 칸을 눌러 공개하세요.`;
 }
-$('seatShuffle').onclick=shuffleSeats;
+$('seatShuffle').onclick=()=>prepareSeats(true);
+$('seatReveal').onclick=()=>prepareSeats(false);
 $('seatReset').onclick=()=>{seatAssignments=[];seatRevealed.clear();seatEmpty.clear();seatReady=false;renderSeats()};
-$('seatRows').oninput=$('seatCols').oninput=()=>{if(!seatReady){seatEmpty.clear();renderSeats()}};
+$('seatRows').oninput=$('seatCols').oninput=()=>{seatAssignments=[];seatRevealed.clear();seatEmpty.clear();seatReady=false;renderSeats()};
 renderSeats();
 })();
 </script>
