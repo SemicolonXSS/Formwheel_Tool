@@ -28,7 +28,14 @@ button.danger{color:var(--danger)}
 .big-time{font-size:48px;font-variant-numeric:tabular-nums;text-align:center;padding:25px 0}
 .seat-grid{display:grid;gap:10px;margin-top:18px}
 .seat{min-height:76px;border:1px solid var(--line);background:#f7f8fc;border-radius:14px;display:flex;align-items:center;justify-content:center;text-align:center;font-weight:800;font-size:16px;cursor:pointer;user-select:none}
-.seat.revealed{background:var(--accent2);border-color:var(--accent);color:var(--accent)}.seat.marked-empty{background:#fff1f2;border-color:#fda4af;color:#be123c}
+.seat.revealed{background:var(--accent2);border-color:var(--accent);color:var(--accent)}
+.seat.gender-male{background:#e8f1ff;border-color:#60a5fa;color:#2563eb}
+.seat.gender-female{background:#ffe9f1;border-color:#f472b6;color:#db2777}
+.seat.gender-male.revealed{background:#dbeafe;border-color:#3b82f6;color:#1d4ed8}
+.seat.gender-female.revealed{background:#fce7f3;border-color:#ec4899;color:#be185d}
+.gender-help{font-size:13px;color:var(--muted);margin-top:7px;line-height:1.6}
+.gender-box{margin-top:12px;padding:12px;background:#f8f9fb;border-radius:12px;border:1px solid var(--line)}
+.gender-box b{font-size:14px}.seat.marked-empty{background:#fff1f2;border-color:#fda4af;color:#be123c}
 .seat.empty{color:#98a2b3;cursor:default}.seat:disabled{opacity:1}
 .status{color:var(--muted);font-size:14px;margin-top:12px}.hidden{display:none!important}
 .check-item{display:flex;gap:10px;align-items:center;padding:11px;border-bottom:1px solid var(--line)}.check-item:last-child{border-bottom:0}
@@ -324,8 +331,19 @@ button.danger{color:var(--danger)}
 <div class="field"><label>열</label><input id="seatCols" type="number" min="1" max="20" value="5"></div>
 </div>
 <div style="margin-top:12px"><label style="display:block;font-size:13px;font-weight:700;margin-bottom:6px">사람 이름</label>
-<textarea id="seatNames" rows="7" placeholder="한 줄에 한 명씩 입력&#10;민수&#10;지우&#10;서연&#10;현우&#10;유진"></textarea></div>
-<div class="actions"><button class="action" id="seatShuffle">🔀 셔플</button><button class="action primary" id="seatReveal">▶️ 시작</button><button class="action" id="seatReset">↩️ 초기화</button></div>
+<textarea id="seatNames" rows="7" placeholder="한 줄에 한 명씩 입력&#10;남:민수&#10;여:지우&#10;남:현우&#10;여:서연&#10;남:유진"></textarea>
+<div class="gender-help">성별을 지정하려면 <b>남:이름</b> 또는 <b>여:이름</b> 형식으로 입력하세요. 성별을 안 적은 사람은 남여 조정에서 제외됩니다.</div></div>
+<div class="gender-box">
+  <b>🎨 성별 색상</b>
+  <span style="margin-left:10px;color:#2563eb">■ 남자 = 파랑</span>
+  <span style="margin-left:10px;color:#db2777">■ 여자 = 핑크</span>
+</div>
+<div class="actions">
+<button class="action" id="seatShuffle">🔀 셔플</button>
+<button class="action" id="seatGenderAdjust">👥 남여 조정</button>
+<button class="action primary" id="seatReveal">▶️ 시작</button>
+<button class="action" id="seatReset">↩️ 초기화</button>
+</div>
 <div class="status" id="seatStatus">행과 열, 사람을 입력한 뒤 셔플하세요.</div>
 <div id="seatGrid" class="seat-grid"></div>
 </section>
@@ -629,37 +647,68 @@ $('imageDownload').onclick=()=>{
 
 /* seats */
 let seatAssignments=[],seatRevealed=new Set(),seatReady=false,seatEmpty=new Set();
-function seatVals(){const r=Math.max(1,Math.min(20,parseInt($('seatRows').value)||1)),c=Math.max(1,Math.min(20,parseInt($('seatCols').value)||1));$('seatRows').value=r;$('seatCols').value=c;return{r,c,total:r*c,n:$('seatNames').value.split(/\n|,/).map(x=>x.trim()).filter(Boolean)}}
-function renderSeats(){
- const {r,c,total,n}=seatVals(),g=$('seatGrid');
- g.style.gridTemplateColumns=`repeat(${c},minmax(0,1fr))`;g.innerHTML='';
- for(let i=0;i<total;i++){
-  const b=document.createElement('button');b.type='button';b.className='seat';
-  const label=`${Math.floor(i/c)+1}-${i%c+1}`,person=seatAssignments[i];
-  if(!seatReady){
-   b.textContent=seatEmpty.has(i)?'빈자리':label;
-   if(seatEmpty.has(i))b.classList.add('marked-empty');
-   b.title='우클릭으로 빈자리 지정/해제';
-   b.addEventListener('contextmenu',e=>{
-    e.preventDefault();
-    if(seatEmpty.has(i)) seatEmpty.delete(i); else seatEmpty.add(i);
-    renderSeats();
-   });
-  }else if(seatEmpty.has(i)){
-   b.textContent='빈자리';b.classList.add('empty');b.disabled=true;
-  }else if(person!==undefined){
-   if(seatRevealed.has(i)){b.textContent=person;b.classList.add('revealed')}
-   else{b.textContent=label;b.onclick=()=>{seatRevealed.add(i);renderSeats()}}
-  }else{
-   b.textContent='빈자리';b.classList.add('empty');b.disabled=true;
-  }
-  g.appendChild(b);
- }
- $('seatStatus').textContent=seatReady
-  ? `공개된 자리 ${seatRevealed.size} / ${n.length}명 · 지정된 빈자리 ${seatEmpty.size}칸`
-  : `현재 ${seatEmpty.size}칸을 빈자리로 지정했습니다. 우클릭으로 추가/해제하세요.`;
+let seatGenderOrder=null,seatGenderOrderKey='';
+
+function parseSeatNames(){
+  return $('seatNames').value.split(/\n|,/).map(x=>x.trim()).filter(Boolean).map(raw=>{
+    const m=raw.match(/^(남|여)\s*[:：]\s*(.+)$/);
+    return m ? {name:m[2].trim(),gender:m[1]} : {name:raw.replace(/^(남|여)\s*[-–—]\s*/,'').trim(),gender:''};
+  }).filter(x=>x.name);
 }
+
+function seatVals(){
+  const r=Math.max(1,Math.min(20,parseInt($('seatRows').value)||1));
+  const c=Math.max(1,Math.min(20,parseInt($('seatCols').value)||1));
+  $('seatRows').value=r;$('seatCols').value=c;
+  return {r,c,total:r*c,n:parseSeatNames()};
+}
+
+function genderClass(person){
+  if(!person)return '';
+  return person.gender==='남'?'gender-male':person.gender==='여'?'gender-female':'';
+}
+
+function renderSeats(){
+  const {r,c,total,n}=seatVals(),g=$('seatGrid');
+  g.style.gridTemplateColumns=`repeat(${c},minmax(0,1fr))`;g.innerHTML='';
+  for(let i=0;i<total;i++){
+    const b=document.createElement('button');b.type='button';b.className='seat';
+    const label=`${Math.floor(i/c)+1}-${i%c+1}`,person=seatAssignments[i];
+
+    if(!seatReady){
+      b.textContent=seatEmpty.has(i)?'빈자리':label;
+      if(seatEmpty.has(i))b.classList.add('marked-empty');
+      b.title='우클릭으로 빈자리 지정/해제';
+      b.addEventListener('contextmenu',e=>{
+        e.preventDefault();
+        if(seatEmpty.has(i)) seatEmpty.delete(i); else seatEmpty.add(i);
+        renderSeats();
+      });
+    }else if(seatEmpty.has(i)){
+      b.textContent='빈자리';b.classList.add('empty');b.disabled=true;
+    }else if(person!==undefined){
+      const gc=genderClass(person);
+      if(gc)b.classList.add(gc);
+      if(seatRevealed.has(i)){
+        b.textContent=person.name;
+        b.classList.add('revealed');
+      }else{
+        b.textContent=label;
+        b.onclick=()=>{seatRevealed.add(i);renderSeats()};
+      }
+    }else{
+      b.textContent='빈자리';b.classList.add('empty');b.disabled=true;
+    }
+    g.appendChild(b);
+  }
+
+  $('seatStatus').textContent=seatReady
+    ? `공개된 자리 ${seatRevealed.size} / ${n.length}명 · 지정된 빈자리 ${seatEmpty.size}칸`
+    : `현재 ${seatEmpty.size}칸을 빈자리로 지정했습니다. 우클릭으로 추가/해제하세요.`;
+}
+
 let seatOrder=null,seatOrderKey='';
+
 function seatCheck(){
   const {total,n}=seatVals(),available=total-seatEmpty.size;
   if(!n.length){$('seatStatus').textContent='사람을 한 명 이상 입력해주세요.';return null}
@@ -667,34 +716,118 @@ function seatCheck(){
   if(n.length<available){$('seatStatus').textContent=`사람 ${n.length}명인데 빈자리를 제외하면 ${available}칸입니다. 남는 ${available-n.length}칸도 빈자리로 지정해주세요.`;return null}
   return {total,n};
 }
-/* 셔플: 순서만 섞음 (시작 전 상태 유지) */
+
+/* 일반 셔플 */
 function shuffleSeats(){
   const v=seatCheck();if(!v)return;
   const p=[...v.n];
-  for(let i=p.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[p[i],p[j]]=[p[j],p[i]]}
-  seatOrder=p;seatOrderKey=v.n.join('\n');
-  seatAssignments=[];seatRevealed.clear();seatReady=false;
+  for(let i=p.length-1;i>0;i--){
+    const j=Math.floor(Math.random()*(i+1));
+    [p[i],p[j]]=[p[j],p[i]];
+  }
+  seatOrder=p;seatOrderKey=v.n.map(x=>x.name+'|'+x.gender).join('\n');
+  seatGenderOrder=null;seatAssignments=[];seatRevealed.clear();seatReady=false;
   renderSeats();
   $('seatStatus').textContent=`셔플 완료! ${p.length}명의 순서가 섞였습니다. 시작을 누르면 배정됩니다.`;
 }
-/* 시작: 셔플했으면 섞인 순서, 아니면 입력한 순서 그대로 배정 */
+
+/*
+ * 남여 조정
+ * - 남/여가 지정된 사람만 대상으로 남-여-남-여 형태를 기본으로 배치
+ * - 한쪽 성별이 더 많으면 남는 사람은 뒤쪽에 이어서 배치
+ * - 성별 정보가 없는 사람은 성별 지정자 뒤에 배치
+ */
+function adjustGenderSeats(){
+  const v=seatCheck();if(!v)return;
+  const males=v.n.filter(x=>x.gender==='남');
+  const females=v.n.filter(x=>x.gender==='여');
+  const unknown=v.n.filter(x=>!x.gender);
+
+  if(!males.length || !females.length){
+    $('seatStatus').textContent='남:이름 / 여:이름 형식으로 남녀를 각각 한 명 이상 지정해주세요.';
+    return;
+  }
+
+  // 각각 내부 순서는 랜덤화
+  const m=[...males], f=[...females], u=[...unknown];
+  for(let i=m.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[m[i],m[j]]=[m[j],m[i]]}
+  for(let i=f.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[f[i],f[j]]=[f[j],f[i]]}
+  for(let i=u.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[u[i],u[j]]=[u[j],u[i]]}
+
+  const result=[];
+  let mi=0,fi=0;
+
+  // 더 적은 쪽이 소진될 때까지 남-여 교차
+  while(mi<m.length && fi<f.length){
+    result.push(m[mi++],f[fi++]);
+  }
+
+  // 남은 성별은 뒤에 배치
+  while(mi<m.length)result.push(m[mi++]);
+  while(fi<f.length)result.push(f[fi++]);
+  while(u.length)result.push(u.shift());
+
+  seatGenderOrder=result;
+  seatGenderOrderKey=v.n.map(x=>x.name+'|'+x.gender).join('\n');
+  seatOrder=null;seatAssignments=[];seatRevealed.clear();seatReady=false;
+  renderSeats();
+
+  const pattern=result.filter(x=>x.gender).map(x=>x.gender).join(' ');
+  $('seatStatus').textContent=`남여 조정 완료! ${pattern}${unknown.length?' · 성별 미지정 '+unknown.length+'명은 뒤에 배치':''} · 시작을 누르세요.`;
+}
+
+/* 시작 */
 function startSeats(){
   const v=seatCheck();if(!v)return;
-  const useShuffled=seatOrder&&seatOrderKey===v.n.join('\n');
-  const p=useShuffled?seatOrder:[...v.n];
+  const key=v.n.map(x=>x.name+'|'+x.gender).join('\n');
+
+  let p;
+  if(seatGenderOrder&&seatGenderOrderKey===key){
+    p=seatGenderOrder;
+  }else if(seatOrder&&seatOrderKey===key){
+    p=seatOrder;
+  }else{
+    p=[...v.n];
+    // 기존 동작 유지: 셔플하지 않고 시작하면 입력 순서대로 배정
+  }
+
   seatAssignments=Array(v.total).fill(undefined);
   let k=0;
   for(let i=0;i<v.total;i++)if(!seatEmpty.has(i))seatAssignments[i]=p[k++];
   seatRevealed.clear();seatReady=true;
   renderSeats();
-  $('seatStatus').textContent=(useShuffled?`섞인 순서대로 `:`랜덤한 순서대로 `)+`${p.length}명이 배정되었습니다. 칸을 눌러 공개하세요.`;
+
+  const genderAdjusted=seatGenderOrder&&seatGenderOrderKey===key;
+  const shuffled=!genderAdjusted&&seatOrder&&seatOrderKey===key;
+  $('seatStatus').textContent=(genderAdjusted
+    ? '남여 조정된 순서대로 '
+    : shuffled
+      ? '섞인 순서대로 '
+      : '입력한 순서대로 ')
+    +`${p.length}명이 배정되었습니다. 칸을 눌러 공개하세요.`;
 }
+
 $('seatShuffle').onclick=shuffleSeats;
+$('seatGenderAdjust').onclick=adjustGenderSeats;
 $('seatReveal').onclick=startSeats;
-$('seatReset').onclick=()=>{seatAssignments=[];seatRevealed.clear();seatEmpty.clear();seatReady=false;seatOrder=null;seatOrderKey='';renderSeats()};
-$('seatNames').addEventListener('input',()=>{seatOrder=null;seatOrderKey='';if(seatReady){seatAssignments=[];seatRevealed.clear();seatReady=false;renderSeats()}});
-$('seatRows').oninput=$('seatCols').oninput=()=>{seatAssignments=[];seatRevealed.clear();seatEmpty.clear();seatReady=false;seatOrder=null;seatOrderKey='';renderSeats()};
+$('seatReset').onclick=()=>{
+  seatAssignments=[];seatRevealed.clear();seatEmpty.clear();seatReady=false;
+  seatOrder=null;seatOrderKey='';seatGenderOrder=null;seatGenderOrderKey='';
+  renderSeats();
+};
+$('seatNames').addEventListener('input',()=>{
+  seatOrder=null;seatOrderKey='';seatGenderOrder=null;seatGenderOrderKey='';
+  if(seatReady){
+    seatAssignments=[];seatRevealed.clear();seatReady=false;renderSeats();
+  }
+});
+$('seatRows').oninput=$('seatCols').oninput=()=>{
+  seatAssignments=[];seatRevealed.clear();seatEmpty.clear();seatReady=false;
+  seatOrder=null;seatOrderKey='';seatGenderOrder=null;seatGenderOrderKey='';
+  renderSeats();
+};
 renderSeats();
+
 })();
 </script>
 </body>
