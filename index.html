@@ -353,13 +353,18 @@ document.querySelectorAll('[data-calc]').forEach(b=>b.addEventListener('click',(
  $('calcDisplay').value=calc||'0';
 }));
 /* timer */
-let timerId=null,timerLeft=60;
+let timerId=null,timerLeft=60,timerDeadline=0;
 function timerRead(){const m=Math.max(0,parseInt($('timerMin').value)||0),s=Math.max(0,Math.min(59,parseInt($('timerSec').value)||0));return m*60+s}
 function timerRender(){let s=Math.max(0,timerLeft);$('timerDisplay').textContent=String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0')}
-$('timerStart').onclick=()=>{if(timerId)return;if(timerLeft<=0)timerLeft=timerRead();timerId=setInterval(()=>{timerLeft--;timerRender();if(timerLeft<=0){clearInterval(timerId);timerId=null;alert('⏱️ 타이머가 끝났습니다!')}},1000)};
-$('timerPause').onclick=()=>{clearInterval(timerId);timerId=null};
-$('timerReset').onclick=()=>{clearInterval(timerId);timerId=null;timerLeft=timerRead();timerRender()};
-$('timerMin').oninput=$('timerSec').oninput=()=>{if(!timerId){timerLeft=timerRead();timerRender()}};
+function timerTick(){
+ timerLeft=Math.max(0,Math.ceil((timerDeadline-Date.now())/1000));timerRender();
+ if(timerLeft===0){clearInterval(timerId);timerId=null;timerDeadline=0;alert('⏱️ 타이머가 끝났습니다!')}
+}
+$('timerStart').onclick=()=>{if(timerId!==null)return;if(timerLeft<=0)timerLeft=timerRead();if(timerLeft<=0)return;timerDeadline=Date.now()+timerLeft*1000;timerId=setInterval(timerTick,200);timerTick()};
+$('timerPause').onclick=()=>{if(timerId!==null)timerLeft=Math.max(0,Math.ceil((timerDeadline-Date.now())/1000));clearInterval(timerId);timerId=null;timerDeadline=0;timerRender()};
+$('timerReset').onclick=()=>{clearInterval(timerId);timerId=null;timerDeadline=0;timerLeft=timerRead();timerRender()};
+$('timerMin').oninput=$('timerSec').oninput=()=>{if(timerId===null){timerLeft=timerRead();timerRender()}};
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&timerId!==null)timerTick()});
 /* stopwatch */
 let swStart=0,swElapsed=0,swId=null;
 function swRender(){const t=swElapsed+(swId?Date.now()-swStart:0);const cs=Math.floor(t/10)%100,s=Math.floor(t/1000)%60,m=Math.floor(t/60000);$('swDisplay').textContent=String(m).padStart(2,'0')+':'+String(s).padStart(2,'0')+'.'+String(cs).padStart(2,'0')}
@@ -699,3 +704,4 @@ renderSeats();
 </script>
 </body>
 </html>
+
