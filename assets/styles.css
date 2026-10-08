@@ -38,3 +38,5 @@ button.danger{color:var(--danger)}
 .meter>div{height:100%;width:0;background:var(--accent);transition:width .08s}
 .qr-output{display:flex;justify-content:center;align-items:center;min-height:180px;background:#fff;border:1px dashed var(--line);border-radius:12px;margin-top:14px}
 @media(max-width:760px){.layout{grid-template-columns:1fr}.sidebar{display:grid;grid-template-columns:repeat(2,1fr);gap:3px}.container{padding-top:20px}h1{font-size:26px}}
+
+.seat-grid{overflow-x:auto;max-width:100%;padding-bottom:8px}.seat{overflow:hidden;overflow-wrap:anywhere}

@@ -1550,7 +1550,7 @@ let seatAssignments=[],seatRevealed=new Set(),seatReady=false,seatEmpty=new Set(
 function seatVals(){const r=Math.max(1,Math.min(20,parseInt($('seatRows').value)||1)),c=Math.max(1,Math.min(20,parseInt($('seatCols').value)||1));$('seatRows').value=r;$('seatCols').value=c;return{r,c,total:r*c,n:$('seatNames').value.split(/\n|,/).map(x=>x.trim()).filter(Boolean)}}
 function renderSeats(){
  const {r,c,total,n}=seatVals(),g=$('seatGrid');
- g.style.gridTemplateColumns=`repeat(${c},minmax(0,1fr))`;g.innerHTML='';
+ g.style.gridTemplateColumns=`repeat(${c},minmax(64px,1fr))`;g.innerHTML='';
  for(let i=0;i<total;i++){
   const b=document.createElement('button');b.type='button';b.className='seat';
   const label=`${Math.floor(i/c)+1}-${i%c+1}`,person=seatAssignments[i];
