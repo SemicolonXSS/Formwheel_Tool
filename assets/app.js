@@ -1,4 +1,4 @@
-import {allocateSeats, validateSnapshot} from "../modules/seats.js";
+import {allocateSeats, validateSnapshot} from "../modules/seats.js?v=8bbe15e8a923";
 (() => {
 const $=id=>document.getElementById(id);
 document.querySelectorAll('.tool-btn').forEach(btn=>btn.addEventListener('click',()=>{
