@@ -1,6 +1,6 @@
 # Formwheel_Tool
 
-계산기, 타이머, 단위 변환 등 실생활에 필요한 도구 모음.
+계산기·타이머와 성별 패턴·저장·CSV를 지원하는 자리 배치 등 생활 도구 모음.
 
 - 실행: https://semicolonxss.github.io/Formwheel_Tool/
 - 프로젝트 목록: https://semicolonxss.github.io/Formwheel/
