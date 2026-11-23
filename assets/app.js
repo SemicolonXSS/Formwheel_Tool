@@ -47,8 +47,8 @@ $('memoText').value=store.get('fw_tool_memo')||'';
 $('memoText').addEventListener('input',()=>store.set('fw_tool_memo',$('memoText').value));
 $('memoClear').onclick=()=>{$('memoText').value='';store.del('fw_tool_memo')};
 /* todo */
-let todos=[];try{todos=JSON.parse(store.get('fw_tool_todos')||'[]')}catch{todos=[]}
-function renderTodos(){const box=$('todoList');box.innerHTML='';todos.forEach((t,i)=>{const row=document.createElement('div');row.className='check-item';const c=document.createElement('input');c.type='checkbox';c.style.width='auto';c.checked=t.done;c.onchange=()=>{t.done=c.checked;saveTodos()};const s=document.createElement('span');s.textContent=t.text;if(t.done)s.className='done';const d=document.createElement('button');d.className='action danger';d.textContent='삭제';d.onclick=()=>{todos.splice(i,1);saveTodos()};row.append(c,s,d);box.appendChild(row)})}
+let todos=[];try{const saved=JSON.parse(store.get('fw_tool_todos')||'[]');if(Array.isArray(saved))todos=saved.filter(t=>t&&typeof t.text==='string').map(t=>({text:t.text,done:t.done===true}))}catch{todos=[]}
+function renderTodos(){const box=$('todoList');box.innerHTML='';todos.forEach((t,i)=>{const row=document.createElement('div');row.className='check-item';const c=document.createElement('input');c.type='checkbox';c.id='fw-todo-'+i;c.style.width='auto';c.checked=t.done;c.onchange=()=>{t.done=c.checked;saveTodos()};const s=document.createElement('label');s.htmlFor=c.id;s.textContent=t.text;if(t.done)s.className='done';const d=document.createElement('button');d.className='action danger';d.textContent='삭제';d.onclick=()=>{todos.splice(i,1);saveTodos()};row.append(c,s,d);box.appendChild(row)})}
 function saveTodos(){store.set('fw_tool_todos',JSON.stringify(todos));renderTodos()}
 $('todoAdd').onclick=()=>{const v=$('todoInput').value.trim();if(v){todos.push({text:v,done:false});$('todoInput').value='';saveTodos()}};
 $('todoInput').addEventListener('keydown',e=>{if(e.key==='Enter')$('todoAdd').click()});
@@ -78,7 +78,7 @@ $('ddayBtn').onclick=()=>{
  $('ddayResult').textContent=diff===0?'D-Day!':diff>0?'D-'+diff:'D+'+Math.abs(diff);
 };
 /* math */
-function renderMathInputs(){const t=$('mathType').value;const box=$('mathInputs');box.innerHTML=t==='circle'?'<div class="field"><label>반지름 r</label><input id="mx" type="number" value="5"></div>':t==='avg'?'<div class="field"><label>숫자 (쉼표로 구분)</label><input id="mx" value="10,20,30"></div>':'<div class="field"><label>a</label><input id="mx" type="number" value="3"></div><div class="field"><label>b</label><input id="my" type="number" value="4"></div>'}
+function renderMathInputs(){const t=$('mathType').value;const box=$('mathInputs');box.innerHTML=t==='circle'?'<div class="field"><label for="mx">반지름 r</label><input id="mx" type="number" value="5"></div>':t==='avg'?'<div class="field"><label for="mx">숫자 (쉼표로 구분)</label><input id="mx" value="10,20,30"></div>':'<div class="field"><label for="mx">a</label><input id="mx" type="number" value="3"></div><div class="field"><label for="my">b</label><input id="my" type="number" value="4"></div>'}
 $('mathType').onchange=renderMathInputs;renderMathInputs();
 $('mathBtn').onclick=()=>{const t=$('mathType').value;if(t==='circle'){const r=Number($('mx').value);$('mathResult').textContent=`넓이 ${(Math.PI*r*r).toFixed(2)} · 둘레 ${(2*Math.PI*r).toFixed(2)}`}else if(t==='avg'){const a=$('mx').value.split(',').map(x=>x.trim()).filter(x=>x!=='').map(Number).filter(Number.isFinite);$('mathResult').textContent=a.length?'평균 '+(a.reduce((x,y)=>x+y,0)/a.length).toFixed(4):'숫자를 입력해주세요.'}else{const a=Number($('mx').value),b=Number($('my').value);$('mathResult').textContent='c = '+Math.hypot(a,b).toFixed(4)}};
 /* ratio */
